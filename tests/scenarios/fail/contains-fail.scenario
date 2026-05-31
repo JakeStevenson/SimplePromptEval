@@ -1,0 +1,13 @@
+id=test-fail
+name=Contains scoring fails when expected text is missing
+score_mode=contains
+
+[PROMPT]
+The answer includes alpha token.
+[/PROMPT]
+
+[EXPECTED]
+alpha token
+missing gamma token
+[/EXPECTED]
+

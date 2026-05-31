@@ -1,0 +1,12 @@
+id=llm-judge
+name=LLM judged outcome
+score_mode=llm
+pass_threshold=3
+
+[PROMPT]
+Write a two-sentence onboarding note for a prompt evaluation tool.
+[/PROMPT]
+
+[EXPECTED]
+prompt evaluation tool
+[/EXPECTED]

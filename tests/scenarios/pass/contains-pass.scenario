@@ -1,0 +1,13 @@
+id=test-pass
+name=Contains scoring passes when expected text is present
+score_mode=contains
+
+[PROMPT]
+The answer includes alpha token and beta token.
+[/PROMPT]
+
+[EXPECTED]
+alpha token
+beta token
+[/EXPECTED]
+

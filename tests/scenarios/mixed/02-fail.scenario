@@ -1,0 +1,12 @@
+id=test-mixed-fail
+name=Mixed suite failing scenario
+score_mode=contains
+
+[PROMPT]
+portable prompt evaluation
+[/PROMPT]
+
+[EXPECTED]
+not present in output
+[/EXPECTED]
+

@@ -1,0 +1,12 @@
+id=test-mixed-pass
+name=Mixed suite passing scenario
+score_mode=contains
+
+[PROMPT]
+portable prompt evaluation
+[/PROMPT]
+
+[EXPECTED]
+portable prompt evaluation
+[/EXPECTED]
+

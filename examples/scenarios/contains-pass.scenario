@@ -1,0 +1,12 @@
+id=contains-pass
+name=Simple contains check
+score_mode=contains
+
+[PROMPT]
+Return the exact phrase: portable prompt evaluation
+[/PROMPT]
+
+[EXPECTED]
+portable prompt evaluation
+[/EXPECTED]
+
