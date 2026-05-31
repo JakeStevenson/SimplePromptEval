@@ -1,0 +1,13 @@
+id=groq-real-pass
+name=Groq real model exact-token response
+score_mode=contains
+
+[PROMPT]
+Reply with exactly this token and no other text:
+PROMPTEVAL_GROQ_REAL_PASS
+[/PROMPT]
+
+[EXPECTED]
+PROMPTEVAL_GROQ_REAL_PASS
+[/EXPECTED]
+

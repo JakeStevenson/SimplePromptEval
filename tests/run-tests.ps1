@@ -55,3 +55,19 @@ Invoke-Case `
         "FAIL test-mixed-fail - Mixed suite failing scenario"
     )
 
+$templateOutput = & powershell `
+    -NoProfile `
+    -ExecutionPolicy Bypass `
+    -File $PromptEval `
+    -Config $config `
+    -Scenarios (Join-Path $PSScriptRoot "scenarios\template") `
+    -PromptFile (Join-Path $PSScriptRoot "templates\echo-input.prompt") 2>&1
+$templateExitCode = $LASTEXITCODE
+$templateText = ($templateOutput | Out-String).Trim()
+if ($templateExitCode -ne 0) {
+    throw "prompt-file suite expected exit code 0 but got $templateExitCode. Output: $templateText"
+}
+if ($templateText -notlike "*PASS test-template-pass - Prompt file renders scenario input*") {
+    throw "prompt-file suite output did not contain expected PASS line. Output: $templateText"
+}
+[Console]::WriteLine("PASS prompt-file suite renders input")

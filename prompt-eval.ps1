@@ -1,6 +1,7 @@
 param(
     [string]$Config = "prompt-eval.conf",
     [string]$Scenarios = "scenarios",
+    [string]$PromptFile = "",
     [switch]$VerboseOutput
 )
 
@@ -57,6 +58,20 @@ function Get-Section {
         }
     }
     return ($lines -join [Environment]::NewLine)
+}
+
+function Expand-PromptTemplate {
+    param(
+        [string]$Template,
+        [string]$InputText,
+        [string]$ScenarioId,
+        [string]$ScenarioName
+    )
+
+    return $Template.
+        Replace("{{input}}", $InputText).
+        Replace("{{id}}", $ScenarioId).
+        Replace("{{name}}", $ScenarioName)
 }
 
 function Get-AuthHeader {
@@ -180,7 +195,8 @@ Passing threshold: $Threshold
 function Invoke-Scenario {
     param(
         [hashtable]$Settings,
-        [string]$Path
+        [string]$Path,
+        [string]$PromptTemplate
     )
 
     $scenarioValues = Read-KeyValueFile -Path $Path
@@ -188,8 +204,15 @@ function Invoke-Scenario {
     $name = Get-ConfigValue -Values $scenarioValues -Key "name" -Default $id
     $scoreMode = Get-ConfigValue -Values $scenarioValues -Key "score_mode" -Default $Settings.ScoreMode
     $threshold = [int](Get-ConfigValue -Values $scenarioValues -Key "pass_threshold" -Default ([string]$Settings.PassThreshold))
-    $prompt = Get-Section -Path $Path -Name "PROMPT"
+    $scenarioPrompt = Get-Section -Path $Path -Name "PROMPT"
+    $inputText = Get-Section -Path $Path -Name "INPUT"
     $expected = Get-Section -Path $Path -Name "EXPECTED"
+    if ($PromptTemplate) {
+        $prompt = Expand-PromptTemplate -Template $PromptTemplate -InputText $inputText -ScenarioId $id -ScenarioName $name
+    }
+    else {
+        $prompt = $scenarioPrompt
+    }
 
     try {
         $output = Invoke-Llm -Settings $Settings -Model $Settings.Model -Prompt $prompt
@@ -235,6 +258,14 @@ $settings = @{
 }
 if (-not $settings.JudgeModel) { $settings.JudgeModel = $settings.Model }
 
+$promptTemplate = ""
+if ($PromptFile) {
+    if (-not (Test-Path -LiteralPath $PromptFile -PathType Leaf)) {
+        throw "Prompt file not found: $PromptFile"
+    }
+    $promptTemplate = Get-Content -LiteralPath $PromptFile -Raw
+}
+
 if (Test-Path -LiteralPath $Scenarios -PathType Container) {
     $scenarioFiles = @(Get-ChildItem -LiteralPath $Scenarios -Filter "*.scenario" -File | Sort-Object FullName)
 }
@@ -251,7 +282,7 @@ if (-not $scenarioFiles -or $scenarioFiles.Count -eq 0) {
 
 $failed = 0
 foreach ($scenario in $scenarioFiles) {
-    $ok = Invoke-Scenario -Settings $settings -Path $scenario.FullName
+    $ok = Invoke-Scenario -Settings $settings -Path $scenario.FullName -PromptTemplate $promptTemplate
     if (-not $ok) { $failed++ }
 }
 

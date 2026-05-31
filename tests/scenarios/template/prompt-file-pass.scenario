@@ -1,0 +1,13 @@
+id=test-template-pass
+name=Prompt file renders scenario input
+score_mode=contains
+
+[INPUT]
+template substitution works
+[/INPUT]
+
+[EXPECTED]
+Scenario test-template-pass / Prompt file renders scenario input
+template substitution works
+[/EXPECTED]
+

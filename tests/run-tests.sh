@@ -58,3 +58,25 @@ run_case \
   "PASS test-mixed-pass - Mixed suite passing scenario" \
   "FAIL test-mixed-fail - Mixed suite failing scenario"
 
+set +e
+template_output="$("$PROMPT_EVAL" \
+  --config "$CONFIG" \
+  --scenarios "$SCRIPT_DIR/scenarios/template" \
+  --prompt-file "$SCRIPT_DIR/templates/echo-input.prompt" 2>&1)"
+template_exit="$?"
+set -e
+
+if [ "$template_exit" -ne 0 ]; then
+  echo "FAIL prompt-file suite renders input - expected exit code 0 but got $template_exit" >&2
+  echo "$template_output" >&2
+  exit 1
+fi
+
+case "$template_output" in
+  *"PASS test-template-pass - Prompt file renders scenario input"*) echo "PASS prompt-file suite renders input" ;;
+  *)
+    echo "FAIL prompt-file suite renders input - missing expected PASS line" >&2
+    echo "$template_output" >&2
+    exit 1
+    ;;
+esac

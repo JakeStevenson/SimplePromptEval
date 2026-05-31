@@ -1,0 +1,15 @@
+id=groq-support-account-access
+name=Account access recovery
+score_mode=contains
+
+[INPUT]
+Customer: Priya Shah
+Plan: Pro
+Message: I replaced my phone and cannot approve the authenticator challenge anymore. I can still receive email at the account address. I need access before tomorrow morning's client review.
+[/INPUT]
+
+[EXPECTED]
+Category: Account Access
+Severity: Medium
+[/EXPECTED]
+

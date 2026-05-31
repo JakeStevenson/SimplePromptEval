@@ -3,11 +3,12 @@ set -u
 
 CONFIG_FILE="prompt-eval.conf"
 SCENARIO_PATH="scenarios"
+PROMPT_FILE=""
 VERBOSE=0
 
 usage() {
   cat <<'USAGE'
-Usage: prompt-eval.sh [--config FILE] [--scenarios PATH] [--verbose]
+Usage: prompt-eval.sh [--config FILE] [--scenarios PATH] [--prompt-file FILE] [--verbose]
 
 Runs .scenario prompt evaluation files and prints pass/fail results.
 USAGE
@@ -17,6 +18,7 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --config) CONFIG_FILE="${2:-}"; shift 2 ;;
     --scenarios) SCENARIO_PATH="${2:-}"; shift 2 ;;
+    --prompt-file) PROMPT_FILE="${2:-}"; shift 2 ;;
     --verbose) VERBOSE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
@@ -56,6 +58,18 @@ extract_section() {
     $0 == stop { in_section=0; exit }
     in_section { print }
   ' "$file"
+}
+
+render_prompt_template() {
+  local template="$1"
+  local input="$2"
+  local id="$3"
+  local name="$4"
+  local rendered="$template"
+  rendered="${rendered//\{\{input\}\}/$input}"
+  rendered="${rendered//\{\{id\}\}/$id}"
+  rendered="${rendered//\{\{name\}\}/$name}"
+  printf '%s' "$rendered"
 }
 
 load_config() {
@@ -196,19 +210,26 @@ Passing threshold: $threshold"
 
 run_scenario() {
   local file="$1"
-  local id name scenario_score_mode threshold prompt expected output
+  local id name scenario_score_mode threshold scenario_prompt input expected prompt output
 
   id="$(read_value "$file" id)"
   name="$(read_value "$file" name)"
   scenario_score_mode="$(read_value "$file" score_mode)"
   threshold="$(read_value "$file" pass_threshold)"
-  prompt="$(extract_section "$file" PROMPT)"
+  scenario_prompt="$(extract_section "$file" PROMPT)"
+  input="$(extract_section "$file" INPUT)"
   expected="$(extract_section "$file" EXPECTED)"
 
   id="${id:-$(basename "$file" .scenario)}"
   name="${name:-$id}"
   scenario_score_mode="${scenario_score_mode:-$SCORE_MODE}"
   threshold="${threshold:-$PASS_THRESHOLD}"
+
+  if [ -n "${PROMPT_TEMPLATE:-}" ]; then
+    prompt="$(render_prompt_template "$PROMPT_TEMPLATE" "$input" "$id" "$name")"
+  else
+    prompt="$scenario_prompt"
+  fi
 
   output="$(call_llm "$MODEL" "$prompt")" || {
     echo "FAIL $id - $name (LLM call failed)"
@@ -241,6 +262,15 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 load_config
+
+PROMPT_TEMPLATE=""
+if [ -n "$PROMPT_FILE" ]; then
+  if [ ! -f "$PROMPT_FILE" ]; then
+    echo "Prompt file not found: $PROMPT_FILE" >&2
+    exit 2
+  fi
+  PROMPT_TEMPLATE="$(awk '1' "$PROMPT_FILE")"
+fi
 
 if [ -d "$SCENARIO_PATH" ]; then
   SCENARIOS=()

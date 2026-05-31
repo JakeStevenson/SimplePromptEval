@@ -9,6 +9,45 @@ The tool intentionally avoids heavy dependencies:
 - Bash version: `bash` and `curl`
 - PowerShell version: PowerShell 5.1+ or PowerShell 7+
 
+## Try The Real Demo
+
+The Groq support triage demo compares an original under-specified prompt with an
+improved prompt against the same customer-support scenarios.
+
+PowerShell:
+
+```powershell
+Copy-Item .env.ps1.example .env.ps1
+# Edit .env.ps1 and set GROQ_API_KEY
+. .\.env.ps1
+.\demos\groq-support-triage\run-comparison.ps1
+```
+
+Bash:
+
+```bash
+cp .env.example .env
+# Edit .env and set GROQ_API_KEY
+source ./.env
+./demos/groq-support-triage/run-comparison.sh
+```
+
+Expected shape:
+
+```text
+=== Original prompt ===
+PASS groq-support-billing-refund - Billing refund escalation
+FAIL groq-support-account-access - Account access recovery
+FAIL groq-support-feature-request - Feature request logging
+FAIL groq-support-technical-issue - Technical issue workflow block
+
+=== Improved prompt ===
+PASS groq-support-billing-refund - Billing refund escalation
+PASS groq-support-account-access - Account access recovery
+PASS groq-support-feature-request - Feature request logging
+PASS groq-support-technical-issue - Technical issue workflow block
+```
+
 ## Quick Start
 
 Bash:
@@ -82,8 +121,11 @@ Or provide a command that prints a token:
 
 ```text
 auth_type=oauth_command
-oauth_token_command=az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv
+oauth_token_command=az account get-access-token --scope https://cognitiveservices.azure.com/.default --query accessToken -o tsv
 ```
+
+Only use `oauth_token_command` with config files you trust. It runs the
+configured command locally.
 
 ## Scenario Files
 
@@ -108,6 +150,45 @@ Summarize the release notes in three bullets.
 
 For `score_mode=contains`, each non-empty line in `[EXPECTED]` must appear in
 the model output.
+
+### Reusable Prompt Files
+
+For realistic prompt evaluation, keep the prompt under test in its own file and
+put test data in each scenario's `[INPUT]` section:
+
+```text
+[INPUT]
+Customer ticket or task input goes here.
+[/INPUT]
+
+[EXPECTED]
+Category: Billing
+Severity: High
+[/EXPECTED]
+```
+
+Prompt files can use these placeholders:
+
+| Placeholder | Description |
+| --- | --- |
+| `{{input}}` | The scenario's `[INPUT]` section. |
+| `{{id}}` | The scenario id. |
+| `{{name}}` | The scenario name. |
+
+Bash:
+
+```bash
+./prompt-eval.sh --config demos/groq-support-triage/groq.conf --scenarios demos/groq-support-triage/scenarios --prompt-file demos/groq-support-triage/prompts/improved.prompt
+```
+
+PowerShell:
+
+```powershell
+.\prompt-eval.ps1 -Config demos\groq-support-triage\groq.conf -Scenarios demos\groq-support-triage\scenarios -PromptFile demos\groq-support-triage\prompts\improved.prompt
+```
+
+When `--prompt-file` / `-PromptFile` is provided, the rendered prompt file is
+used instead of any `[PROMPT]` section in the scenario file.
 
 ## Output
 
@@ -138,8 +219,40 @@ Bash:
 ./tests/run-tests.sh
 ```
 
-The test suites cover:
+The offline test suites cover:
 
 - A fully passing scenario directory, which exits `0`.
 - A fully failing scenario directory, which exits `1`.
 - A mixed directory, which reports both `PASS` and `FAIL` and exits `1`.
+- Prompt-file rendering with scenario `[INPUT]`.
+
+### Groq Integration Test
+
+Groq exposes an OpenAI-compatible chat completions endpoint, so it can use the
+same `openai-compatible` provider:
+
+```text
+endpoint=https://api.groq.com/openai/v1/chat/completions
+model=llama-3.1-8b-instant
+api_key_env=GROQ_API_KEY
+```
+
+Set your key in the environment, then run either integration test:
+
+```powershell
+$env:GROQ_API_KEY = "..."
+.\tests\run-groq-tests.ps1
+```
+
+```bash
+export GROQ_API_KEY="..."
+./tests/run-groq-tests.sh
+```
+
+If `GROQ_API_KEY` is not set, the integration test prints `SKIP` and exits `0`.
+
+## Security
+
+Do not commit real API keys or bearer tokens. Local `.env` files are ignored by
+Git; use the checked-in example files as templates. See [SECURITY.md](SECURITY.md)
+for notes on secrets, OAuth commands, and the dependency-free Bash JSON parser.

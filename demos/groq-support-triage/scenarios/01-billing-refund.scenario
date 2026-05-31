@@ -1,0 +1,15 @@
+id=groq-support-billing-refund
+name=Billing refund escalation
+score_mode=contains
+
+[INPUT]
+Customer: Northstar Dental
+Plan: Business
+Message: We were charged twice for the annual renewal yesterday. The second charge caused our card to hit its limit and now payroll reimbursements are blocked. Please reverse the duplicate charge today and confirm when it is done.
+[/INPUT]
+
+[EXPECTED]
+Category: Billing
+Severity: High
+[/EXPECTED]
+

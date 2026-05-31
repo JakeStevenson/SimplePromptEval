@@ -1,0 +1,15 @@
+id=groq-support-feature-request
+name=Feature request logging
+score_mode=contains
+
+[INPUT]
+Customer: Meadow Analytics
+Plan: Team
+Message: It would be useful if exported CSV reports included the workspace name in a separate column. We can work around it manually for now, but it would save our analysts time.
+[/INPUT]
+
+[EXPECTED]
+Category: Feature Request
+Severity: Low
+[/EXPECTED]
+

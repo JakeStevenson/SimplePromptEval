@@ -1,0 +1,15 @@
+id=groq-support-technical-issue
+name=Technical issue workflow block
+score_mode=contains
+
+[INPUT]
+Customer: HarborOps
+Plan: Business
+Message: Since this morning, every attempt to upload a PDF contract returns "processing failed" after about 30 seconds. PNG uploads still work. Our legal team cannot send the contract package until the PDFs process.
+[/INPUT]
+
+[EXPECTED]
+Category: Technical Issue
+Severity: Medium
+[/EXPECTED]
+
