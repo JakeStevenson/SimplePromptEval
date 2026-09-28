@@ -88,6 +88,10 @@ load_config() {
   PROVIDER="${PROVIDER:-openai-compatible}"
   ENDPOINT="${ENDPOINT:-https://api.openai.com/v1/chat/completions}"
   MODEL="${MODEL:-gpt-4.1-mini}"
+  # claude-cli uses the logged-in Claude Code default model when none is set.
+  if [ "$PROVIDER" = "claude-cli" ] && [ "$MODEL" = "gpt-4.1-mini" ]; then
+    MODEL=""
+  fi
   SCORE_MODE="${SCORE_MODE:-llm}"
   JUDGE_MODEL="${JUDGE_MODEL:-$MODEL}"
   PASS_THRESHOLD="${PASS_THRESHOLD:-3}"
@@ -129,6 +133,15 @@ call_llm() {
   if [ "$PROVIDER" = "mock" ]; then
     printf '%s\n' "$user_prompt"
     return 0
+  fi
+
+  if [ "$PROVIDER" = "claude-cli" ]; then
+    if [ -n "$model" ]; then
+      claude -p "$user_prompt" --model "$model"
+    else
+      claude -p "$user_prompt"
+    fi
+    return
   fi
 
   local escaped_prompt escaped_model payload header
